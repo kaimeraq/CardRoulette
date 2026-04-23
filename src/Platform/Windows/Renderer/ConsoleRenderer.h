@@ -13,12 +13,21 @@ class ConsoleRenderer : public Renderer,
 protected:
     void OnDisplayCard(const Card& card) override;
     void OnDisplayHand(const Hand& hand) override;
-    void OnDisplayDeck(const Deck& deck) override;
+    void OnDisplayDeck(const Deck& deck, bool bOnSingleRow = false) override;
     void Clear() override;
 
 public:
     ConsoleRenderer() = default;
     ~ConsoleRenderer() = default;
+
+    // Temporary for convenience in widgets
+    static ConsoleRenderer& Get() {
+        static ConsoleRenderer instance;
+        return instance;
+    }
+
+    ConsoleRenderer(const ConsoleRenderer&) = delete;
+    ConsoleRenderer& operator=(const ConsoleRenderer&) = delete;
 
     void Print(const std::wstring& text);
     void Print(const std::string& text);
@@ -52,6 +61,10 @@ public:
 
 private:
     int GetCardOffset(const Card& card) const;
-    void RenderCardRow(std::wstring& buff, int cardOffset, int row, bool isRedCard) const;
+
+    void StageCardRow(std::wstring& buff, int cardOffset, int row, bool isSuitColored) const;
+    void StageDeckSingleRow(std::wstring& frame, const Deck& deck);
+    void StageDeckChunked(std::wstring& frame, const Deck& deck);
+
     void SubmitFrame(std::wstring frame);
 };

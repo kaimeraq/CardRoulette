@@ -69,6 +69,7 @@ namespace
         case 'V': return L"\u15C4";
         case 'A': return L"\u15C5";
         case 'I': return L"\u0196";
+        case 'W': return L"\uA4E4";
         default:
         {
             static wchar_t fallback[2] = {};
@@ -77,6 +78,67 @@ namespace
             return fallback;
         }
         }
+    }
+
+    static bool IsValueIdentifier(unsigned char c)
+    {
+        static const unsigned char kValues[] = 
+        {
+            '2','3','4','5','6','7','8','9','1','0',
+            'J','Q','K','A','b','E','h','u','L','V',
+            'y','I','k','O'
+        };
+
+        for (unsigned char v : kValues)
+        {
+            if (c == v)
+            {
+                return true;
+            }
+        }
+            
+        return false;
+    }
+
+    static bool IsBorderIdentifier(unsigned char c)
+    {
+        static const unsigned char kBorders[] =
+        {
+            'r','l','s','d','-','|'
+        };
+
+        for (unsigned char v : kBorders)
+        {
+            if (c == v)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool IsExtraIdentifier(unsigned char c)
+    {
+        static const unsigned char kExtras[] =
+        {
+            '\\','/','{','}','_',',','&'
+        };
+
+        for (unsigned char v : kExtras)
+        {
+            if (c == v)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool IsColorable(bool isSuitColored, unsigned char c)
+    {
+        return isSuitColored && !IsValueIdentifier(c) && !IsBorderIdentifier(c) && !IsExtraIdentifier(c);
     }
 
     static std::wstring ToWide(const std::string& text)
@@ -120,7 +182,7 @@ int ConsoleRenderer::GetCardOffset(const Card& card) const
     return (card.face.value * Card::NUM_SUITS + card.suit.value) * CARD_AREA;
 }
 
-void ConsoleRenderer::RenderCardRow(std::wstring& buff, int cardOffset, int row, bool isColorCard) const
+void ConsoleRenderer::StageCardRow(std::wstring& buff, int cardOffset, int row, bool isSuitColored) const
 {
     const char* data = (const char*)s_cardsData;
     const unsigned char* mask = (const unsigned char*)s_cardsData + (Card::DECK_SIZE * CARD_AREA);
@@ -136,7 +198,7 @@ void ConsoleRenderer::RenderCardRow(std::wstring& buff, int cardOffset, int row,
     {
         unsigned char c = (unsigned char)*(data + cardOffset + rowOffset + col);
 
-        buff += (isColorCard && mask[rowOffset + col]) ? ansiColor : ansiReset;
+        buff += (IsColorable(isSuitColored, c) && mask[rowOffset + col]) ? ansiColor : ansiReset;
         buff += ConvertCharToEncodedWide(c);
     }
 }
@@ -154,7 +216,7 @@ void ConsoleRenderer::OnDisplayCard(const Card& card)
 
     for (int row = 0; row < CARD_HEIGHT; row++)
     {
-        RenderCardRow(frame, cardOffset, row, IsColorCard(card));
+        StageCardRow(frame, cardOffset, row, IsColorCard(card));
         frame += L'\n';
     }
 
@@ -172,7 +234,7 @@ void ConsoleRenderer::OnDisplayHand(const Hand& hand)
         for (int index = 0; index < hand.GetCardCount(); index++)
         {
             const Card* card = hand.GetCards()[index].GetCard();
-            RenderCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
+            StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
         }
 
         frame += L'\n';
@@ -181,27 +243,44 @@ void ConsoleRenderer::OnDisplayHand(const Hand& hand)
     SubmitFrame(std::move(frame));
 }
 
-void ConsoleRenderer::OnDisplayDeck(const Deck& deck)
+void ConsoleRenderer::StageDeckSingleRow(std::wstring& frame, const Deck& deck)
 {
-    Clear();
-    std::wstring frame;
-    frame.reserve(CARD_HEIGHT * CARD_WIDTH * Card::DECK_SIZE * 16);
-
-    for (int chunk = 0; chunk < Card::DECK_SIZE; chunk += Card::NUM_FACES)
+    for (int index = 0; index < Card::DECK_SIZE; index++)
     {
-        int cardsInChunk = min(Card::NUM_FACES, Card::DECK_SIZE - chunk);
-
+        const Card* card = deck.GetCards()[index].GetCard();
+        
         for (int row = 0; row < CARD_HEIGHT; row++)
         {
-            for (int index = 0; index < cardsInChunk; index++)
+            StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
+            frame += L'\n';
+        }
+    }
+}
+
+void ConsoleRenderer::StageDeckChunked(std::wstring& frame, const Deck& deck)
+{
+    for (int chunk = 0; chunk < Card::DECK_SIZE; chunk += Card::NUM_FACES)
+    {
+        for (int row = 0; row < CARD_HEIGHT; row++)
+        {
+            for (int index = 0; index < Card::NUM_FACES; index++)
             {
                 const Card* card = deck.GetCards()[chunk + index].GetCard();
-                RenderCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
+                StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
             }
 
             frame += L'\n';
         }
     }
+}
+
+void ConsoleRenderer::OnDisplayDeck(const Deck& deck, bool bOnSingleRow)
+{
+    Clear();
+    std::wstring frame;
+    frame.reserve(CARD_HEIGHT * CARD_WIDTH * Card::DECK_SIZE * 16);
+
+    bOnSingleRow ? StageDeckSingleRow(frame, deck) : StageDeckChunked(frame, deck);
 
     SubmitFrame(std::move(frame));
 }

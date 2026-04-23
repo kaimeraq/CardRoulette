@@ -270,22 +270,24 @@ public:
 class DeckDisplayComp : public DisplayComponent
 {
     const Deck* m_deck = nullptr;
+    bool m_bOnSingleRow = false;
 
 protected:
     void OnDisplay() override
     {
         if (m_deck)
         {
-            OnDisplayDeck(*m_deck);
+            OnDisplayDeck(*m_deck, m_bOnSingleRow);
         }
     }
 
-    virtual void OnDisplayDeck(const Deck& deck) = 0;
+    virtual void OnDisplayDeck(const Deck& deck, bool bOnSingleRow = false) = 0;
 
 public:
-    void DisplayDeck(const Deck& deck)
+    void DisplayDeck(const Deck& deck, bool bOnSingleRow = false)
     {
         m_deck = &deck;
+        m_bOnSingleRow = bOnSingleRow;
         Display();
         m_deck = nullptr;
     }

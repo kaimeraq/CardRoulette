@@ -44,16 +44,18 @@ public:
 class DeckWidget : public Widget
 {
     const Deck* m_deck = nullptr;
+    bool m_bOnSingleRow = false;
 
 public:
-    DeckWidget(const Deck* deck)
-        : m_deck(deck) {
+    DeckWidget(const Deck* deck, bool bOnSingleRow = false)
+        : m_deck(deck), m_bOnSingleRow(bOnSingleRow) {
     }
 
     void Draw() const override
     {
         if (m_deck)
         {
+            ConsoleRenderer::Get().DisplayDeck(*m_deck, m_bOnSingleRow);
             //static_cast<DeckRenderer*>(GetRenderer())->DisplayDeck(*m_deck);
         }
     }
