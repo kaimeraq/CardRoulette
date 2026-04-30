@@ -1,23 +1,31 @@
 #pragma once
 
 #include "Card.h"
-
-#include <array>
+#include "CardHandle.h"
 
 class Deck
 {
-    std::array<CardInstance, Card::DECK_SIZE> m_cards{};
+    static CardInstance s_canonicalDeck[Card::DECK_SIZE];
+    static bool s_initialized;
+
+    uint8_t m_cards[Card::DECK_SIZE] = {};
     int m_topIndex = Card::DECK_SIZE - 1;
+
+    static void Init();
 
 public:
     Deck();
 
     void ShuffleDeck();
     
-    const CardInstance* Draw();
-    void Put(const CardInstance* card);
+    CardHandle Draw();
+    void Put(CardHandle handle);
+    CardHandle GetCard(int index) const;
     
     void LogDeck() const;
-    const CardInstance* GetCards() const { return m_cards.data(); }
-    int GetCardCount() const { return Card::DECK_SIZE; }
+    
+    int GetCardCount() const 
+    { 
+        return Card::DECK_SIZE; 
+    }
 };

@@ -21,7 +21,7 @@ bool CRState::AddPlayer(int index)
 void CRState::DealCardToPlayer(int index)
 {
     assert(index >= 0 && index < MAX_NUM_PLAYERS);
-    static_cast<CRPlayer&>(*m_players[index]).AddCard(*m_deck.Draw());
+    static_cast<CRPlayer&>(*m_players[index]).AddCard(m_deck.Draw());
 }
 
 void CRState::ShuffleDeck()

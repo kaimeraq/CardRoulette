@@ -1,6 +1,6 @@
 #include "CRPlayer.h"
 
-void CRPlayer::AddCard(const CardInstance card)
+void CRPlayer::AddCard(CardHandle card)
 {
     m_hand.AddCard(card);
 }

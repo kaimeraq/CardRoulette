@@ -10,7 +10,7 @@ class CRPlayer : public Player
 public:
     using Player::Player;
 
-    void AddCard(const CardInstance card);
+    void AddCard(CardHandle card);
     int GetHandValue() const;
     const Hand& GetHand() const;
 };
