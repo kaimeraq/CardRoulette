@@ -14,11 +14,11 @@ public:
     CardWidget(const Card* card)
         : m_card(card) {}
 
-    void Draw() const override
+    void Render() const override
     {
         if (m_card)
         {
-            //static_cast<CardRenderer*>(GetRenderer())->DisplayCard(*m_card);
+            ConsoleRenderer::Get().DisplayCard(*m_card);
         }
     }
 };
@@ -32,11 +32,11 @@ public:
         : m_hand(hand) {
     }
 
-    void Draw() const override
+    void Render() const override
     {
         if (m_hand)
         {
-            //static_cast<HandRenderer*>(GetRenderer())->DisplayHand(*m_hand);
+            ConsoleRenderer::Get().DisplayHand(*m_hand);
         }
     }
 };
@@ -51,12 +51,11 @@ public:
         : m_deck(deck), m_bOnSingleRow(bOnSingleRow) {
     }
 
-    void Draw() const override
+    void Render() const override
     {
         if (m_deck)
         {
             ConsoleRenderer::Get().DisplayDeck(*m_deck, m_bOnSingleRow);
-            //static_cast<DeckRenderer*>(GetRenderer())->DisplayDeck(*m_deck);
         }
     }
 };
