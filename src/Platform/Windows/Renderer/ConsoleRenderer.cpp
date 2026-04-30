@@ -1,18 +1,20 @@
+#include <Core/Logger.h>
+
+#ifdef PLATFORM_WINDOWS
+#include <Platform/Windows/OSWindows.h>
+#endif
+
 #include "ConsoleRenderer.h"
+#include "Assets/CardConfig.h"
 #include <Renderer/RenderWorker.h>
 
-#if defined(_WIN32) || defined(_WIN64)
-#include <fcntl.h>
-#include <io.h>
-#include <Windows.h>
-#define PLATFORM_WINDOWS
-#endif
+constexpr Category Cat_Renderer = Category::Renderer;
 
 constexpr int CARD_WIDTH = 9;
 constexpr int CARD_HEIGHT = 7;
 constexpr int CARD_AREA = CARD_WIDTH * CARD_HEIGHT;
 
-/*namespace
+namespace
 {
     struct VTInit
     {
@@ -20,94 +22,140 @@ constexpr int CARD_AREA = CARD_WIDTH * CARD_HEIGHT;
         {
 #ifdef PLATFORM_WINDOWS
             HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-            DWORD mode = 0;
-            GetConsoleMode(hOut, &mode);
-            SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            if (hOut == INVALID_HANDLE_VALUE)
+            {
+                CRASH_FATAL(Cat_Renderer, "Couldn't get the console output handle.");
+            }
+
+            HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
+            if (hIn == INVALID_HANDLE_VALUE)
+            {
+                CRASH_FATAL(Cat_Renderer, "Couldn't get the console input handle.");
+            }
+
+            DWORD dwOriginalOutMode = 0;
+            DWORD dwOriginalInMode = 0;
+
+            if (!GetConsoleMode(hOut, &dwOriginalOutMode))
+            {
+                CRASH_FATAL(Cat_Renderer, "Couldn't get the console output mode.");
+            }
+            if (!GetConsoleMode(hIn, &dwOriginalInMode))
+            {
+                CRASH_FATAL(Cat_Renderer, "Couldn't get the console input mode.");
+            }
+
+            DWORD dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+            DWORD dwRequestedInModes = ENABLE_VIRTUAL_TERMINAL_INPUT;
+
+            DWORD dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
+            if (!SetConsoleMode(hOut, dwOutMode))
+            {
+                // we failed to set both modes, try to step down mode gracefully.
+                dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
+
+                if (!SetConsoleMode(hOut, dwOutMode))
+                {
+                    // Failed to set any VT mode, can't do anything here.
+                    CRASH_FATAL(Cat_Renderer, "Failed to set any VT output modes.");
+                }
+            }
+
+            DWORD dwInMode = dwOriginalInMode | dwRequestedInModes;
+            if (!SetConsoleMode(hIn, dwInMode))
+            {
+                // Failed to set VT input mode, can't do anything here.
+                CRASH_FATAL(Cat_Renderer, "Failed to set any VT input modes.");
+            }
+
+            Logger::Get().bVTSupported = true;
+            LOG_VERBOSE(Cat_Renderer, "Successfully set VT modes.");
 #endif
         }
     };
 
     static VTInit s_vtInit;
-}*/
+}
 
 namespace
 {
-    static const wchar_t* ConvertCharToEncodedWide(unsigned char c)
+    static GENCSTR ConvertCharToEncoded(UANSICHAR c)
     {
-        switch (c) 
+        switch (c)
         {
-        case 'r': return L"\u250C";
-        case 'l': return L"\u2510";
-        case 's': return L"\u2514";
-        case 'd': return L"\u2518";
-        case '-': return L"\u2500";
-        case '|': return L"\u2502";
-        case '.': return L" ";
-        case 'S': return L"\u2660";
-        case 'C': return L"\u2663";
-        case 'H': return L"\u2665";
-        case 'D': return L"\u2666";
-        case 'b': return L"\u218A";
-        case 'E': return L"\u218B";
-        case 'u': return L"\u03DB";
-        case 'v': return L"\u02C5";
-        case '^': return L"\u02C4";
-        case '_': return L"\u203F";
-        case '=': return L"\u2040";
-        case 'y': return L"\u0550";
-        case ',': return L"\u22CF";
-        case 't': return L"\u2534";
-        case '$': return L"\u02C5";
-        case 'O': return L"\u053E";
-        case 'T': return L"\u2021";
-        case '{': return L"\uFD3E";
-        case '}': return L"\uFD3F";
-        case 'w': return L"\u02AC";
-        case '&': return L"\u04DC";
-        case 'k': return L"\uA7B0";
-        case 'o': return L"\u2092";
-        case 'V': return L"\u15C4";
-        case 'A': return L"\u15C5";
-        case 'I': return L"\u0196";
-        case 'W': return L"\uA4E4";
+        case 'r': return GENTEXT("\u250C");
+        case 'l': return GENTEXT("\u2510");
+        case 's': return GENTEXT("\u2514");
+        case 'd': return GENTEXT("\u2518");
+        case '-': return GENTEXT("\u2500");
+        case '|': return GENTEXT("\u2502");
+        case '.': return GENTEXT(" "; )
+        case 'S': return GENTEXT("\u2660");
+        case 'C': return GENTEXT("\u2663");
+        case 'H': return GENTEXT("\u2665");
+        case 'D': return GENTEXT("\u2666");
+        case 'b': return GENTEXT("\u218A");
+        case 'E': return GENTEXT("\u218B");
+        case '$': return GENTEXT("\u03DB");
+        case 'v': return GENTEXT("\u02C5");
+        case '^': return GENTEXT("\u02C4");
+        case '_': return GENTEXT("\u203F");
+        case '=': return GENTEXT("\u2040");
+        case 'y': return GENTEXT("\u0550");
+        case ',': return GENTEXT("\u22CF");
+        case 't': return GENTEXT("\u2534");
+        case 'u': return GENTEXT("\u02C5");
+        case 'O': return GENTEXT("\u053E");
+        case 'T': return GENTEXT("\u2021");
+        case '{': return GENTEXT("\uFD3E");
+        case '}': return GENTEXT("\uFD3F");
+        case 'w': return GENTEXT("\u02AC");
+        case '&': return GENTEXT("\u04DC");
+        case 'k': return GENTEXT("\uA7B0");
+        case 'o': return GENTEXT("\u2092");
+        case 'V': return GENTEXT("\u15C4");
+        case 'A': return GENTEXT("\u15C5");
+        case 'I': return GENTEXT("\u0196");
+        case 'W': return GENTEXT("\uA4E4");
         default:
         {
-            static wchar_t fallback[2] = {};
-            fallback[0] = (wchar_t)c;
+            static GENCHAR fallback[2] = {};
+            fallback[0] = (GENCHAR)c;
             fallback[1] = L'\0';
             return fallback;
         }
         }
     }
 
-    static bool IsValueIdentifier(unsigned char c)
+    static bool IsValueIdentifier(UANSICHAR c)
     {
-        static const unsigned char kValues[] = 
+        static const UANSICHAR kValues[] =
         {
             '2','3','4','5','6','7','8','9','1','0',
             'J','Q','K','A','b','E','h','u','L','V',
             'y','I','k','O'
         };
 
-        for (unsigned char v : kValues)
+        for (UANSICHAR v : kValues)
         {
             if (c == v)
             {
                 return true;
             }
         }
-            
+
         return false;
     }
 
-    static bool IsBorderIdentifier(unsigned char c)
+    static bool IsBorderIdentifier(UANSICHAR c)
     {
-        static const unsigned char kBorders[] =
+        static const UANSICHAR kBorders[] =
         {
             'r','l','s','d','-','|'
         };
 
-        for (unsigned char v : kBorders)
+        for (UANSICHAR v : kBorders)
         {
             if (c == v)
             {
@@ -118,14 +166,14 @@ namespace
         return false;
     }
 
-    static bool IsExtraIdentifier(unsigned char c)
+    static bool IsExtraIdentifier(UANSICHAR c)
     {
-        static const unsigned char kExtras[] =
+        static const UANSICHAR kExtras[] =
         {
             '\\','/','{','}','_',',','&'
         };
 
-        for (unsigned char v : kExtras)
+        for (UANSICHAR v : kExtras)
         {
             if (c == v)
             {
@@ -136,33 +184,13 @@ namespace
         return false;
     }
 
-    static bool IsColorable(bool isSuitColored, unsigned char c)
+    static bool IsColorable(bool isSuitColored, UANSICHAR c)
     {
         return isSuitColored && !IsValueIdentifier(c) && !IsBorderIdentifier(c) && !IsExtraIdentifier(c);
     }
-
-    static std::wstring ToWide(const std::string& text)
-    {
-        if (text.empty())
-        {
-            return {};
-        }
-
-        int size = MultiByteToWideChar(CP_UTF8, 0, text.data(), (int)text.size(), nullptr, 0);
-        std::wstring wide(size, 0);
-
-        MultiByteToWideChar(CP_UTF8, 0, text.data(), (int)text.size(), &wide[0], size);
-        return wide;
-    }
-
-    template<typename... Args>
-    static std::wstring ToWide(std::format_string<Args...> fmt, Args&&... args)
-    {
-        return ToWide(std::format(fmt, std::forward<Args>(args)...));
-    }
 }
 
-void ConsoleRenderer::SubmitFrame(std::wstring frame)
+void ConsoleRenderer::SubmitFrame(GENSTRING frame)
 {
     RenderWorker::Instance().Submit(
         [frame = std::move(frame)]() mutable
@@ -182,24 +210,26 @@ int ConsoleRenderer::GetCardOffset(const Card& card) const
     return (card.face.value * Card::NUM_SUITS + card.suit.value) * CARD_AREA;
 }
 
-void ConsoleRenderer::StageCardRow(std::wstring& buff, int cardOffset, int row, bool isSuitColored) const
+void ConsoleRenderer::StageCardRow(GENSTRING& buff, int cardOffset, int row, bool isSuitColored) const
 {
-    const char* data = (const char*)s_cardsData;
-    const unsigned char* mask = (const unsigned char*)s_cardsData + (Card::DECK_SIZE * CARD_AREA);
-    unsigned char colorCode = data[sizeof(s_cardsData) - 1];
+    UANSICSTR data = (UANSICSTR)s_cardsData;
+    UANSICSTR mask = (UANSICSTR)s_cardsData + (Card::DECK_SIZE * CARD_AREA);
+    UANSICHAR colorCode = (UANSICHAR)data[sizeof(s_cardsData) - 1];
 
-    wchar_t ansiColor[16]{};
-    wchar_t ansiReset[] = L"\x1B[0m";
-    swprintf(ansiColor, _countof(ansiColor), L"\x1B[%dm", colorCode);
+    std::array<GENCHAR, 16> ansiColor{};
+    std::array<GENCHAR, 16> ansiReset{};
+    
+    std::format_to(ansiColor.data(), GENTEXT("\x1B[{}m"), colorCode);
+    std::format_to(ansiReset.data(), GENTEXT("\x1B[0m"));
 
     int rowOffset = row * CARD_WIDTH;
     
     for (int col = 0; col < CARD_WIDTH; col++)
     {
-        unsigned char c = (unsigned char)*(data + cardOffset + rowOffset + col);
+        UANSICHAR c = *(data + cardOffset + rowOffset + col);
 
-        buff += (IsColorable(isSuitColored, c) && mask[rowOffset + col]) ? ansiColor : ansiReset;
-        buff += ConvertCharToEncodedWide(c);
+        buff += (IsColorable(isSuitColored, c) && mask[rowOffset + col]) ? ansiColor.data() : ansiReset.data();
+        buff += ConvertCharToEncoded(c);
     }
 }
 
@@ -211,13 +241,13 @@ static bool IsColorCard(const Card& card)
 void ConsoleRenderer::OnDisplayCard(const Card& card)
 {
     int cardOffset = GetCardOffset(card);
-    std::wstring frame;
+    GENSTRING frame;
     frame.reserve(CARD_HEIGHT * CARD_WIDTH * 16);
 
     for (int row = 0; row < CARD_HEIGHT; row++)
     {
         StageCardRow(frame, cardOffset, row, IsColorCard(card));
-        frame += L'\n';
+        frame += GENTEXT('\n');
     }
 
     SubmitFrame(std::move(frame));
@@ -226,14 +256,14 @@ void ConsoleRenderer::OnDisplayCard(const Card& card)
 void ConsoleRenderer::OnDisplayHand(const Hand& hand)
 {
     //Clear();
-    std::wstring frame;
+    GENSTRING frame;
     frame.reserve(CARD_HEIGHT * CARD_WIDTH * hand.GetCardCount() * 16);
 
     for (int row = 0; row < CARD_HEIGHT; row++)
     {
         for (int index = 0; index < hand.GetCardCount(); index++)
         {
-            const Card* card = hand.GetCards()[index].GetCard();
+            const Card* card = hand.GetCard(index).GetCard();
             StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
         }
 
@@ -243,11 +273,12 @@ void ConsoleRenderer::OnDisplayHand(const Hand& hand)
     SubmitFrame(std::move(frame));
 }
 
-void ConsoleRenderer::StageDeckSingleRow(std::wstring& frame, const Deck& deck)
+void ConsoleRenderer::StageDeckSingleRow(GENSTRING& frame, const Deck& deck)
 {
     for (int index = 0; index < Card::DECK_SIZE; index++)
     {
-        const Card* card = deck.GetCards()[index].GetCard();
+        CardHandle handle = deck.GetCard(index);
+        const Card* card = handle.GetCard();
         
         for (int row = 0; row < CARD_HEIGHT; row++)
         {
@@ -257,7 +288,7 @@ void ConsoleRenderer::StageDeckSingleRow(std::wstring& frame, const Deck& deck)
     }
 }
 
-void ConsoleRenderer::StageDeckChunked(std::wstring& frame, const Deck& deck)
+void ConsoleRenderer::StageDeckChunked(GENSTRING& frame, const Deck& deck)
 {
     for (int chunk = 0; chunk < Card::DECK_SIZE; chunk += Card::NUM_FACES)
     {
@@ -265,7 +296,9 @@ void ConsoleRenderer::StageDeckChunked(std::wstring& frame, const Deck& deck)
         {
             for (int index = 0; index < Card::NUM_FACES; index++)
             {
-                const Card* card = deck.GetCards()[chunk + index].GetCard();
+                CardHandle handle = deck.GetCard(chunk + index);
+                const Card* card = handle.GetCard();
+
                 StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
             }
 
@@ -277,7 +310,7 @@ void ConsoleRenderer::StageDeckChunked(std::wstring& frame, const Deck& deck)
 void ConsoleRenderer::OnDisplayDeck(const Deck& deck, bool bOnSingleRow)
 {
     Clear();
-    std::wstring frame;
+    GENSTRING frame;
     frame.reserve(CARD_HEIGHT * CARD_WIDTH * Card::DECK_SIZE * 16);
 
     bOnSingleRow ? StageDeckSingleRow(frame, deck) : StageDeckChunked(frame, deck);
@@ -308,22 +341,12 @@ void ConsoleRenderer::ForceClear()
     Clear();
 }
 
-void ConsoleRenderer::Print(const std::wstring& text)
+void ConsoleRenderer::Print(const GENSTRING& text)
 {
     SubmitFrame(text);
 }
 
-void ConsoleRenderer::Println(const std::wstring& text)
+void ConsoleRenderer::Println(const GENSTRING& text)
 {
-    Print(text + L'\n');
-}
-
-void ConsoleRenderer::Print(const std::string& text)
-{
-    Print(ToWide(text));
-}
-
-void ConsoleRenderer::Println(const std::string& text)
-{
-    Print(ToWide(text) + L'\n');
+    Print(text + GENTEXT('\n'));
 }
