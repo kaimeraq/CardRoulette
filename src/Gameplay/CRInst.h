@@ -6,8 +6,8 @@
 
 class CRInst : public GameInstance
 {
-	GameLoopState m_state = GameLoopState::SELECT;
 	GameResult m_result;
+	GameLoopState m_state = GameLoopState::SELECT;
 
 	void PrintResult() const;
 	void OnGameOver(const GameResult& result);
@@ -21,4 +21,6 @@ public:
 	CRInst()
 		: GameInstance(std::make_unique<ConsoleRenderer>())
 	{}
+
+	~CRInst() = default;
 };

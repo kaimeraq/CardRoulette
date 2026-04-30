@@ -21,9 +21,9 @@ enum class GameLoopState
 
 struct GameResult
 {
-    const IGameQuery* query;
-    int winnerID;
-    int winningScore;
-    std::array<int, MAX_NUM_PLAYERS> winners;
+    const IGameQuery* query{};
+    std::array<int, MAX_NUM_PLAYERS> winners{};
+    int winnerID = -1;
+    int winningScore = 0;
     int numWinners = 0;
 };

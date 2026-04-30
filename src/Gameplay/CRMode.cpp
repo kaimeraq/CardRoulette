@@ -44,6 +44,6 @@ void CRMode::BeginPlay()
         }
     }
 
-    GameResult result{ &state, winnerID, state.GetScore(winnerID), winners, numWinners };
+    GameResult result{ &state, winners, winnerID, state.GetScore(winnerID), numWinners };
     OnGameOver.ExecuteIfBound(result);
 }
