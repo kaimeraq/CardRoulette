@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Platform/PlatformGeneric.h>
+#include <Platform/Platform.h>
 #include <iterator>
 
 struct Card

@@ -1,12 +1,9 @@
-#include <Core/Logger.h>
-
-#ifdef PLATFORM_WINDOWS
-#include <Platform/Windows/OSWindows.h>
-#endif
+#include <Platform/Platform.h>
+#include <Core/CoreMinimal.h>
+#include <Renderer/RenderWorker.h>
 
 #include "ConsoleRenderer.h"
 #include "Assets/CardConfig.h"
-#include <Renderer/RenderWorker.h>
 
 constexpr Category Cat_Renderer = Category::Renderer;
 
