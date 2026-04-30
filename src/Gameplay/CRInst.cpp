@@ -1,8 +1,11 @@
 #include "CRInst.h"
 #include "CRMode.h"
+#include <Core/Logger.h>
 
 #include <iostream>
 #include <print>
+
+constexpr Category Cat_Game = Category::Gameplay;
 
 void CRInst::OnInit()
 {
@@ -26,7 +29,7 @@ bool CRInst::OnTick()
     {
     case GameLoopState::SELECT:
     {
-        LOG(GAME, "Entering select stage");
+        LOG(Cat_Game, "Entering select stage");
         std::print("Number of players? (2-{}): ", MAX_NUM_PLAYERS);
         std::cin >> m_numPlayers; // <- This is where I get num players from input
 
@@ -56,7 +59,7 @@ bool CRInst::OnTick()
     }
     case GameLoopState::REPLAY:
     {
-        char choice;
+        ANSICHAR choice;
         std::print("\nPlay Again? (Y/N): ");
         std::cin >> choice;
         std::println();
@@ -117,7 +120,7 @@ void CRInst::PrintResult() const
     }
 
     // Debug print winning hand
-#if defined(LOGGING_VERBOSE) && LOGGING_VERBOSE
+#if defined(LOGGING) && LOGGING >= 2
     m_result.query->GetPlayerHand(m_result.winnerID).LogHand();
 #endif
 }

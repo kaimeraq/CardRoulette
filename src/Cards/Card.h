@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Platform/PlatformGeneric.h>
 #include <iterator>
 
 struct Card
@@ -33,15 +34,15 @@ struct Card
 
     struct FaceData
     {
+        ANSICSTR name;
         int id;
-        const char* name;
         int value;
     };
 
     struct SuitData
     {
+        ANSICSTR name;
         int id;
-        const char* name;
     };
 
     struct FaceIndex { int value = FaceID::INVALID; };
@@ -49,27 +50,27 @@ struct Card
 
     static constexpr FaceData s_faces[] =
     {
-        { FaceID::Two,   "Two",   2  },
-        { FaceID::Three, "Three", 3  },
-        { FaceID::Four,  "Four",  4  },
-        { FaceID::Five,  "Five",  5  },
-        { FaceID::Six,   "Six",   6  },
-        { FaceID::Seven, "Seven", 7  },
-        { FaceID::Eight, "Eight", 8  },
-        { FaceID::Nine,  "Nine",  9  },
-        { FaceID::Ten,   "Ten",   10 },
-        { FaceID::Jack,  "Jack",  10 },
-        { FaceID::Queen, "Queen", 10 },
-        { FaceID::King,  "King",  10 },
-        { FaceID::Ace,   "Ace",   11 },
+        {.name = "Two",   .id = FaceID::Two,   .value = 2  },
+        {.name = "Three", .id = FaceID::Three, .value = 3  },
+        {.name = "Four",  .id = FaceID::Four,  .value = 4  },
+        {.name = "Five",  .id = FaceID::Five,  .value = 5  },
+        {.name = "Six",   .id = FaceID::Six,   .value = 6  },
+        {.name = "Seven", .id = FaceID::Seven, .value = 7  },
+        {.name = "Eight", .id = FaceID::Eight, .value = 8  },
+        {.name = "Nine",  .id = FaceID::Nine,  .value = 9  },
+        {.name = "Ten",   .id = FaceID::Ten,   .value = 10 },
+        {.name = "Jack",  .id = FaceID::Jack,  .value = 10 },
+        {.name = "Queen", .id = FaceID::Queen, .value = 10 },
+        {.name = "King",  .id = FaceID::King,  .value = 10 },
+        {.name = "Ace",   .id = FaceID::Ace,   .value = 11 },
     };
 
     static constexpr SuitData s_suits[] =
     {
-        { SuitID::Spades,   "Spades"   },
-        { SuitID::Clubs,    "Clubs"    },
-        { SuitID::Hearts,   "Hearts"   },
-        { SuitID::Diamonds, "Diamonds" },
+        {.name = "Spades",   .id = SuitID::Spades,   },
+        {.name = "Clubs",    .id = SuitID::Clubs,    },
+        {.name = "Hearts",   .id = SuitID::Hearts,   },
+        {.name = "Diamonds", .id = SuitID::Diamonds, },
     };
 
     static constexpr int NUM_FACES = static_cast<int>(std::size(s_faces));
@@ -93,30 +94,19 @@ struct Card
 
     bool IsValid() const;
 
-    static const char* ToString(FaceIndex face);
-    static const char* ToString(SuitIndex suit);
+    static ANSICSTR ToString(FaceIndex face);
+    static ANSICSTR ToString(SuitIndex suit);
     static int GetValue(FaceIndex face);
 
     void Print(bool bIncludeValue) const;
 };
 
-struct CardAttribute
-{
-    int multiplierValue = 1;
-};
-
 struct CardInstance
 {
     int cardId = Card::FaceID::INVALID;
-    CardAttribute attrib;
 
     const Card* GetCard() const 
     { 
         return Card::FindById(cardId); 
-    }
-
-    int GetValue() const
-    {
-        return attrib.multiplierValue;
     }
 };

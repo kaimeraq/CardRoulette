@@ -6,7 +6,7 @@
 #include "Cards/Hand.h"
 #include "Cards/Deck.h"
 
-static const unsigned char s_cardsData[] = {
+static const UANSICHAR s_cardsData[] = {
 0x72,0x2D,0x2D,0x2D,0x2D,0x2D,0x2D,0x2D,0x6C,0x7C,0x32,0x2E,0x2E,0x53,0x2E,0x2E,
 0x2E,0x7C,0x7C,0x2E,0x2E,0x2E,0x2E,0x2E,0x2E,0x2E,0x7C,0x7C,0x2E,0x2E,0x2E,0x2E,
 0x2E,0x2E,0x2E,0x7C,0x7C,0x2E,0x2E,0x2E,0x2E,0x2E,0x2E,0x2E,0x7C,0x7C,0x2E,0x2E,
@@ -235,6 +235,8 @@ protected:
     virtual void OnDisplayCard(const Card& card) = 0;
 
 public:
+    virtual ~CardDisplayComp() = default;
+
     void DisplayCard(const Card& card)
     {
         m_card = &card;
@@ -259,6 +261,8 @@ protected:
     virtual void OnDisplayHand(const Hand& hand) = 0;
 
 public:
+    virtual ~HandDisplayComp() = default;
+
     void DisplayHand(const Hand& hand)
     {
         m_hand = &hand;
@@ -284,6 +288,8 @@ protected:
     virtual void OnDisplayDeck(const Deck& deck, bool bOnSingleRow = false) = 0;
 
 public:
+    virtual ~DeckDisplayComp() = default;
+
     void DisplayDeck(const Deck& deck, bool bOnSingleRow = false)
     {
         m_deck = &deck;

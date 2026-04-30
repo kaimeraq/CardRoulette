@@ -88,13 +88,13 @@ bool Card::IsValid() const
     return face.value != FaceID::INVALID && suit.value != SuitID::INVALID;
 }
 
-const char* Card::ToString(Card::FaceIndex face)
+ANSICSTR Card::ToString(Card::FaceIndex face)
 {
     const FaceData* data = FindFace(face.value);
     return data ? data->name : "INVALID";
 }
 
-const char* Card::ToString(Card::SuitIndex suit)
+ANSICSTR Card::ToString(Card::SuitIndex suit)
 {
     const SuitData* data = FindSuit(suit.value);
     return data ? data->name : "INVALID";

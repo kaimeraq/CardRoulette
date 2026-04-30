@@ -29,15 +29,13 @@ public:
     ConsoleRenderer(const ConsoleRenderer&) = delete;
     ConsoleRenderer& operator=(const ConsoleRenderer&) = delete;
 
-    void Print(const std::wstring& text);
-    void Print(const std::string& text);
-    void Println(const std::string& text);
-    void Println(const std::wstring& text);
+    void Print(const GENSTRING& text);
+    void Println(const GENSTRING& text);
 
     template<typename... Args>
-    void Print(std::format_string<Args...> fmt, Args&&... args)
+    void Print(GENSTRINGFMT<Args...> fmt, Args&&... args)
     {
-        std::wstring buffer;
+        GENSTRING buffer;
         buffer.reserve(256);
 
         std::format_to(std::back_inserter(buffer), fmt, std::forward<Args>(args)...);
@@ -46,13 +44,13 @@ public:
     }
 
     template<typename... Args>
-    void Println(std::format_string<Args...> fmt, Args&&... args)
+    void Println(GENSTRINGFMT<Args...> fmt, Args&&... args)
     {
-        std::wstring buffer;
+        GENSTRING buffer;
         buffer.reserve(256);
 
         std::format_to(std::back_inserter(buffer), fmt, std::forward<Args>(args)...);
-        buffer += L'\n';
+        buffer += GENTEXT('\n');
 
         Print(buffer);
     }
@@ -62,9 +60,9 @@ public:
 private:
     int GetCardOffset(const Card& card) const;
 
-    void StageCardRow(std::wstring& buff, int cardOffset, int row, bool isSuitColored) const;
-    void StageDeckSingleRow(std::wstring& frame, const Deck& deck);
-    void StageDeckChunked(std::wstring& frame, const Deck& deck);
+    void StageCardRow(GENSTRING& buff, int cardOffset, int row, bool isSuitColored) const;
+    void StageDeckSingleRow(GENSTRING& frame, const Deck& deck);
+    void StageDeckChunked(GENSTRING& frame, const Deck& deck);
 
-    void SubmitFrame(std::wstring frame);
+    void SubmitFrame(GENSTRING frame);
 };
