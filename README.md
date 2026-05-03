@@ -15,6 +15,8 @@ Run `GenerateProject.bat` from the root of the repo. This will generate the proj
  
 Open `CardRoulette.sln` in Visual Studio, select a configuration (`Debug`, `Development`, or `Shipping`), and build.
 
+All configurations have debug symbols enabled.
+
 - `Debug` - No optimization (/MTd, /ZI, _DEBUG)
 - `Development` - Partial optimization (/MT, /Zi, NDEBUG)
 - `Shipping` - Full optimization (/GL, /MT, /Zi, NDEBUG)
