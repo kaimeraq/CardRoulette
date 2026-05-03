@@ -48,3 +48,7 @@
 
 # Intermediate folder
 int
+
+# Include 3rdParty binaries
+!3rdParty/
+!3rdParty/**/*.exe
