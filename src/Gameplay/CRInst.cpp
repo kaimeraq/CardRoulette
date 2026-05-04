@@ -1,6 +1,8 @@
 #include "CRInst.h"
 #include "CRMode.h"
 #include <Core/Logger.h>
+#include "UI/Widgets/CardWidget.h"
+#include "UI/Widgets/TextWidget.h"
 
 #include <iostream>
 #include <print>
@@ -31,7 +33,7 @@ bool CRInst::OnTick()
     {
         LOG(Cat_Game, "Entering select stage");
         std::print("Number of players? (2-{}): ", MAX_NUM_PLAYERS);
-        std::cin >> m_numPlayers; // <- This is where I get num players from input
+        std::cin >> m_numPlayers;
 
         if (!std::cin)
         {
@@ -88,35 +90,44 @@ void CRInst::OnGameOver(const GameResult& result)
 
 void CRInst::PrintResult() const
 {
+    const CRState& state = static_cast<CRMode*>(m_mode.get())->GetCRState();
+
+    for (const int winner : m_result.winners)
+    {
+        const Hand& hand = state.GetPlayerHand(winner);
+        HandWidget handWidget(&hand);
+        handWidget.Render();
+    }
+
     if (m_result.numWinners > 1)
     {
-        std::print("It's a tie between players ");
+        PRINT("It's a tie between players ");
 
         for (int i = 0; i < m_result.numWinners; i++)
         {
             if (i == m_result.numWinners - 1)
             {
-                std::print("{}", m_result.winners[i]);
+                PRINT("{}", m_result.winners[i]);
             }
             else if (i == m_result.numWinners - 2 && m_result.numWinners == 2)
             {
-                std::print("{} and ", m_result.winners[i]);
+                PRINT("{} and ", m_result.winners[i]);
             }
             else if (i == m_result.numWinners - 2)
             {
-                std::print("{}, and ", m_result.winners[i]);
+                PRINT("{}, and ", m_result.winners[i]);
             }
             else
             {
-                std::print("{}, ", m_result.winners[i]);
+                PRINT("{}, ", m_result.winners[i]);
             }
         }
 
-        std::println(" with a score of {}", m_result.winningScore);
+        PRINTLN(" with a score of {}", m_result.winningScore);
     }
     else
     {
-        std::println("Player {} wins with a score of {}!", m_result.winnerID, m_result.winningScore);
+        PRINTLN("Player {} wins with a score of {}!", m_result.winnerID, m_result.winningScore);
     }
 
     // Debug print winning hand
