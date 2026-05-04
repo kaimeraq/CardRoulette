@@ -42,7 +42,7 @@ namespace
                 CRASH_FATAL(Cat_Renderer, "Couldn't get the console input mode.");
             }
 
-            DWORD dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING | DISABLE_NEWLINE_AUTO_RETURN;
+            DWORD dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING; // | DISABLE_NEWLINE_AUTO_RETURN;
             DWORD dwRequestedInModes = ENABLE_VIRTUAL_TERMINAL_INPUT;
 
             DWORD dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
@@ -94,7 +94,7 @@ namespace
         case 'D': return GENTEXT("\u2666");
         case 'b': return GENTEXT("\u218A");
         case 'E': return GENTEXT("\u218B");
-        case '$': return GENTEXT("\u03DB");
+        case 'u': return GENTEXT("\u03DB");
         case 'v': return GENTEXT("\u02C5");
         case '^': return GENTEXT("\u02C4");
         case '_': return GENTEXT("\u203F");
@@ -102,7 +102,7 @@ namespace
         case 'y': return GENTEXT("\u0550");
         case ',': return GENTEXT("\u22CF");
         case 't': return GENTEXT("\u2534");
-        case 'u': return GENTEXT("\u02C5");
+        case '$': return GENTEXT("\u02C5");
         case 'O': return GENTEXT("\u053E");
         case 'T': return GENTEXT("\u2021");
         case '{': return GENTEXT("\uFD3E");
@@ -119,7 +119,7 @@ namespace
         {
             static GENCHAR fallback[2] = {};
             fallback[0] = (GENCHAR)c;
-            fallback[1] = L'\0';
+            fallback[1] = GENTEXT('\0');
             return fallback;
         }
         }
@@ -264,7 +264,7 @@ void ConsoleRenderer::OnDisplayHand(const Hand& hand)
             StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
         }
 
-        frame += L'\n';
+        frame += GENTEXT('\n');
     }
 
     SubmitFrame(std::move(frame));
@@ -280,7 +280,7 @@ void ConsoleRenderer::StageDeckSingleRow(GENSTRING& frame, const Deck& deck)
         for (int row = 0; row < CARD_HEIGHT; row++)
         {
             StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
-            frame += L'\n';
+            frame += GENTEXT('\n');
         }
     }
 }
@@ -299,7 +299,7 @@ void ConsoleRenderer::StageDeckChunked(GENSTRING& frame, const Deck& deck)
                 StageCardRow(frame, GetCardOffset(*card), row, IsColorCard(*card));
             }
 
-            frame += L'\n';
+            frame += GENTEXT('\n');
         }
     }
 }
