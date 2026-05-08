@@ -1,11 +1,10 @@
 #include "CRInst.h"
 #include "CRMode.h"
-#include <Core/Logger.h>
+#include <Core/Macros/LogMacros.h>
 #include "UI/Widgets/CardWidget.h"
 #include "UI/Widgets/TextWidget.h"
 
 #include <iostream>
-#include <print>
 
 constexpr Category Cat_Game = Category::Gameplay;
 
@@ -32,7 +31,7 @@ bool CRInst::OnTick()
     case GameLoopState::SELECT:
     {
         LOG(Cat_Game, "Entering select stage");
-        std::print("Number of players? (2-{}): ", MAX_NUM_PLAYERS);
+        PRINT("Number of players? (2-{}): ", MAX_NUM_PLAYERS);
         std::cin >> m_numPlayers;
 
         if (!std::cin)
@@ -62,9 +61,9 @@ bool CRInst::OnTick()
     case GameLoopState::REPLAY:
     {
         ANSICHAR choice;
-        std::print("\nPlay Again? (Y/N): ");
+        PRINT("\nPlay Again? (Y/N): ");
         std::cin >> choice;
-        std::println();
+        PRINTLN("");
 
         if (choice == 'Y' || choice == 'y')
         {
@@ -92,9 +91,10 @@ void CRInst::PrintResult() const
 {
     const CRState& state = static_cast<CRMode*>(m_mode.get())->GetCRState();
 
-    for (const int winner : m_result.winners)
+    for (int i = 0; i < m_result.numWinners; i++)
     {
-        const Hand& hand = state.GetPlayerHand(winner);
+        PRINTLN("\nPlayer {} hand:", m_result.winners[i]);
+        const Hand& hand = state.GetPlayerHand(m_result.winners[i]);
         HandWidget handWidget(&hand);
         handWidget.Render();
     }
