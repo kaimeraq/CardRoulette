@@ -1,6 +1,7 @@
 #pragma once
 
 #include "UI/CardDisplay.h"
+#include "UI/TextDisplay.h"
 
 #include <iostream>
 #include <format>
@@ -8,26 +9,31 @@
 class ConsoleRenderer : public Renderer, 
                         public CardDisplayComp, 
                         public HandDisplayComp,
-                        public DeckDisplayComp
+                        public DeckDisplayComp,
+                        public TextDisplayComp
 {
 protected:
     void OnDisplayCard(const Card& card) override;
     void OnDisplayHand(const Hand& hand) override;
     void OnDisplayDeck(const Deck& deck, bool bOnSingleRow = false) override;
+    void OnDisplayText(const GENSTRING& text, bool bNewLine = false) override;
     void Clear() override;
 
 public:
-    ConsoleRenderer() = default;
+    ConsoleRenderer()
+    {
+        SetInstance(this);
+    }
+
     ~ConsoleRenderer() = default;
 
-    // Temporary for convenience in widgets
+    ConsoleRenderer(const ConsoleRenderer&) = delete;
+    ConsoleRenderer& operator=(const ConsoleRenderer&) = delete;
+
     static ConsoleRenderer& Get() {
         static ConsoleRenderer instance;
         return instance;
     }
-
-    ConsoleRenderer(const ConsoleRenderer&) = delete;
-    ConsoleRenderer& operator=(const ConsoleRenderer&) = delete;
 
     void Print(const GENSTRING& text);
     void Println(const GENSTRING& text);

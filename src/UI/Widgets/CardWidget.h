@@ -18,7 +18,12 @@ public:
     {
         if (m_card)
         {
-            ConsoleRenderer::Get().DisplayCard(*m_card);
+            auto* comp = Renderer::Get().As<CardDisplayComp>();
+
+            if (comp)
+            {
+                comp->DisplayCard(*m_card);
+            }
         }
     }
 };
@@ -36,7 +41,12 @@ public:
     {
         if (m_hand)
         {
-            ConsoleRenderer::Get().DisplayHand(*m_hand);
+            auto* comp = Renderer::Get().As<HandDisplayComp>();
+
+            if (comp)
+            {
+                comp->DisplayHand(*m_hand);
+            }
         }
     }
 };
@@ -55,7 +65,12 @@ public:
     {
         if (m_deck)
         {
-            ConsoleRenderer::Get().DisplayDeck(*m_deck, m_bOnSingleRow);
+            auto* comp = Renderer::Get().As<DeckDisplayComp>();
+
+            if (comp)
+            {
+                comp->DisplayDeck(*m_deck, m_bOnSingleRow);
+            }
         }
     }
 };

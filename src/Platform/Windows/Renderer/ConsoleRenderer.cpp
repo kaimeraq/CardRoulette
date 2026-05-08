@@ -19,52 +19,24 @@ namespace
         {
 #ifdef PLATFORM_WINDOWS
             HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-            if (hOut == INVALID_HANDLE_VALUE)
-            {
-                CRASH_FATAL(Cat_Renderer, "Couldn't get the console output handle.");
-            }
+            ENSURE_FATAL(hOut != INVALID_HANDLE_VALUE, "Couldn't get the console output handle.");
 
             HANDLE hIn = GetStdHandle(STD_INPUT_HANDLE);
-            if (hIn == INVALID_HANDLE_VALUE)
-            {
-                CRASH_FATAL(Cat_Renderer, "Couldn't get the console input handle.");
-            }
+            ENSURE_FATAL(hIn != INVALID_HANDLE_VALUE, "Couldn't get the console input handle.");
 
             DWORD dwOriginalOutMode = 0;
             DWORD dwOriginalInMode = 0;
 
-            if (!GetConsoleMode(hOut, &dwOriginalOutMode))
-            {
-                CRASH_FATAL(Cat_Renderer, "Couldn't get the console output mode.");
-            }
-            if (!GetConsoleMode(hIn, &dwOriginalInMode))
-            {
-                CRASH_FATAL(Cat_Renderer, "Couldn't get the console input mode.");
-            }
+            ENSURE_FATAL(GetConsoleMode(hOut, &dwOriginalOutMode), "Couldn't get the console output mode.");
+            ENSURE_FATAL(GetConsoleMode(hIn, &dwOriginalInMode), "Couldn't get the console input mode.");
 
-            DWORD dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING; // | DISABLE_NEWLINE_AUTO_RETURN;
-            DWORD dwRequestedInModes = ENABLE_VIRTUAL_TERMINAL_INPUT;
+            // Try to set the VT output mode and then check to see if it failed.
+            DWORD dwOutMode = dwOriginalOutMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            ENSURE_FATAL(SetConsoleMode(hOut, dwOutMode), "Failed to set VT output mode.");
 
-            DWORD dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
-            if (!SetConsoleMode(hOut, dwOutMode))
-            {
-                // we failed to set both modes, try to step down mode gracefully.
-                dwRequestedOutModes = ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-                dwOutMode = dwOriginalOutMode | dwRequestedOutModes;
-
-                if (!SetConsoleMode(hOut, dwOutMode))
-                {
-                    // Failed to set any VT mode, can't do anything here.
-                    CRASH_FATAL(Cat_Renderer, "Failed to set any VT output modes.");
-                }
-            }
-
-            DWORD dwInMode = dwOriginalInMode | dwRequestedInModes;
-            if (!SetConsoleMode(hIn, dwInMode))
-            {
-                // Failed to set VT input mode, can't do anything here.
-                CRASH_FATAL(Cat_Renderer, "Failed to set any VT input modes.");
-            }
+            // Try to set the VT input mode and then check to see if it failed.
+            DWORD dwInMode = dwOriginalInMode | ENABLE_VIRTUAL_TERMINAL_INPUT;
+            ENSURE_FATAL(SetConsoleMode(hIn, dwInMode), "Failed to set VT input mode.");
 
             Logger::Get().bVTSupported = true;
             LOG_VERBOSE(Cat_Renderer, "Successfully set VT modes.");
@@ -72,12 +44,12 @@ namespace
         }
     };
 
-    static VTInit s_vtInit;
+    VTInit s_vtInit;
 }
 
 namespace
 {
-    static GENCSTR ConvertCharToEncoded(UANSICHAR c)
+    GENCSTR ConvertCharToEncoded(UANSICHAR c)
     {
         switch (c)
         {
@@ -125,7 +97,7 @@ namespace
         }
     }
 
-    static bool IsValueIdentifier(UANSICHAR c)
+    bool IsValueIdentifier(UANSICHAR c)
     {
         static const UANSICHAR kValues[] =
         {
@@ -145,7 +117,7 @@ namespace
         return false;
     }
 
-    static bool IsBorderIdentifier(UANSICHAR c)
+    bool IsBorderIdentifier(UANSICHAR c)
     {
         static const UANSICHAR kBorders[] =
         {
@@ -163,7 +135,7 @@ namespace
         return false;
     }
 
-    static bool IsExtraIdentifier(UANSICHAR c)
+    bool IsExtraIdentifier(UANSICHAR c)
     {
         static const UANSICHAR kExtras[] =
         {
@@ -181,7 +153,7 @@ namespace
         return false;
     }
 
-    static bool IsColorable(bool isSuitColored, UANSICHAR c)
+    bool IsColorable(bool isSuitColored, UANSICHAR c)
     {
         return isSuitColored && !IsValueIdentifier(c) && !IsBorderIdentifier(c) && !IsExtraIdentifier(c);
     }
@@ -313,6 +285,11 @@ void ConsoleRenderer::OnDisplayDeck(const Deck& deck, bool bOnSingleRow)
     bOnSingleRow ? StageDeckSingleRow(frame, deck) : StageDeckChunked(frame, deck);
 
     SubmitFrame(std::move(frame));
+}
+
+void ConsoleRenderer::OnDisplayText(const GENSTRING& text, bool bNewLine)
+{
+    bNewLine ? Println(text) : Print(text);
 }
 
 // Credit to user CatPlusPlus

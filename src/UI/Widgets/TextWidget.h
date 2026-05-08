@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Renderer/Widget.h>
-#include <Platform/Platform.h>
+#include <Renderer/Renderer.h>
+#include <Core/Macros/ErrorMacros.h>
+#include "UI/TextDisplay.h"
 
 class TextWidget : public Widget
 {
@@ -15,19 +17,21 @@ public:
 
     void Render() const override
     {
-        if (!m_text.empty())
+        auto* comp = Renderer::Get().As<TextDisplayComp>();
+
+        if (comp)
         {
-            m_bNewLine ? ConsoleRenderer::Get().Println(m_text) : ConsoleRenderer::Get().Print(m_text);
+            comp->DisplayText(m_text, m_bNewLine);
         }
     }
 };
 
-#define PRINT(fmt, ...) \
-    do { \
+#define PRINT(fmt, ...)                                                \
+    do {                                                               \
         TextWidget(std::format(GENTEXT(fmt), ##__VA_ARGS__)).Render(); \
     } while(0)
 
-#define PRINTLN(fmt, ...) \
-    do { \
+#define PRINTLN(fmt, ...)                                                    \
+    do {                                                                     \
         TextWidget(std::format(GENTEXT(fmt), ##__VA_ARGS__), true).Render(); \
     } while(0)
