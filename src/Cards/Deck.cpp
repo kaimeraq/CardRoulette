@@ -1,6 +1,6 @@
 #include "Deck.h"
 
-#include "Core/Logger.h"
+#include "Core/Macros/LogMacros.h"
 
 #include <cassert>
 #include <print>
@@ -20,7 +20,8 @@ void Deck::Init()
 
     for (int i = 0; i < Card::DECK_SIZE; ++i)
     {
-        s_canonicalDeck[i] = CardInstance{ i };
+        s_canonicalDeck[i].cardId = i;
+        s_canonicalDeck[i].m_card = Card::FindById(i);
     }
 
     s_initialized = true;

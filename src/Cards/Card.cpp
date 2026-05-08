@@ -69,9 +69,9 @@ static const Card* GetDeckPool()
             {
                 pool[suit * Card::NUM_FACES + face] = Card{ Card::FaceIndex{face}, Card::SuitIndex{suit} };
             }
-
-            initialized = true;
         }
+
+        initialized = true;
     }
 
     return pool;

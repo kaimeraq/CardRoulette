@@ -104,9 +104,10 @@ struct Card
 struct CardInstance
 {
     int cardId = Card::FaceID::INVALID;
+    const Card* m_card = nullptr;
 
-    const Card* GetCard() const 
-    { 
-        return Card::FindById(cardId); 
+    const Card* GetCard() const
+    {
+        return m_card;
     }
 };

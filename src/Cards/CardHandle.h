@@ -17,6 +17,7 @@ class CardHandle
 
 public:
     CardHandle() = default;
+
     bool IsValid() const 
     { 
         return m_instance != nullptr; 
